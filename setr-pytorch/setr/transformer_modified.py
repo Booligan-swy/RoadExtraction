@@ -2,7 +2,7 @@ from torch import mode, tensor
 import torch
 import torch.nn as nn
 from IntmdSequential import IntermediateSequential
-from torch.utils.tensorboard import summaryWriter
+from torch.utils.tensorboard import SummaryWriter
 
 class SelfAttention(nn.Module):
     def __init__(

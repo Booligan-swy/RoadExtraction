@@ -726,6 +726,8 @@ def SETR_MLA_H(dataset='cityscapes', _conv_repr=False, _pe_type="learned"):
     return aux_layers, model
 
 
+
+
 if __name__ == "__main__":
     model = SETR_Naive(img_dim = 512,
         patch_dim = 16,
@@ -739,4 +741,5 @@ if __name__ == "__main__":
         attn_dropout_rate=0.1)
     x = torch.randn(4, 3, 512, 512)
     output = model(x)
+    print(output)
     print(output.size())

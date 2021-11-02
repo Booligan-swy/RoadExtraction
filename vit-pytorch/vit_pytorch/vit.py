@@ -53,17 +53,24 @@ class Attention(nn.Module):
     def forward(self, x):
         print("x_atten size:",x.size())
         qkv = self.to_qkv(x).chunk(3, dim = -1)
-        print("x_atten qkv:",qkv[0].size())
+        print("x_atten q:",qkv[0].size())
+        print("x_atten k:",qkv[1].size())
+        print("x_atten v:",qkv[2].size())
         q, k, v = map(lambda t: rearrange(t, 'b n (h d) -> b h n d', h = self.heads), qkv)
-
+        print("q ",q.size())
+        print("k ",k.size())
+        print("v ",v.size())
         dots = torch.matmul(q, k.transpose(-1, -2)) * self.scale
-
+        print("dots ",dots.size())
         attn = self.attend(dots)
+        print("attn ",attn.size())
 
         out = torch.matmul(attn, v)
+        print("out 1 ",out.size())
         out = rearrange(out, 'b h n d -> b n (h d)')
+        print("out 2 ",out.size())
         out = self.to_out(out)
-
+        print("attention out : ",out.size())
         return out
 
 class Transformer(nn.Module):
@@ -99,7 +106,8 @@ class ViT(nn.Module):
             nn.Linear(patch_dim, dim),
         )
 
-        self.pos_embedding = nn.Parameter(torch.randn(1, num_patches + 1, dim))
+        # self.pos_embedding = nn.Parameter(torch.randn(1, num_patches + 1, dim))
+        self.pos_embedding = nn.Parameter(torch.randn(1, num_patches, dim))
         self.cls_token = nn.Parameter(torch.randn(1, 1, dim))
         self.dropout = nn.Dropout(emb_dropout)
 
@@ -116,18 +124,19 @@ class ViT(nn.Module):
     def forward(self, img):
         print("img.size:",img.size())
         x = self.to_patch_embedding(img)
-        print("x.size:",x.size())
+        print("x self.to_patch_embedding(img):",x.size())
         b, n, _ = x.shape
 
-        cls_tokens = repeat(self.cls_token, '() n d -> b n d', b = b)
-        x = torch.cat((cls_tokens, x), dim=1)
-        print("x.size:",x.size())
+        # cls_tokens = repeat(self.cls_token, '() n d -> b n d', b = b)
+        # print("cls_tokens : ", cls_tokens.size())
+        # x = torch.cat((cls_tokens, x), dim=1)
+        # print("x cls_tokens cat size:",x.size())
         x += self.pos_embedding[:, :(n + 1)]
-        print("x.size:",x.size())
+        print("x pos_embedding :",x.size())
         x = self.dropout(x)
-        print("x.size:",x.size())
+        print("x dropout:",x.size())
         x = self.transformer(x)
-        print("x2.size:",x.size())
+        print("x2 transformer :",x.size())
         x = x.mean(dim = 1) if self.pool == 'mean' else x[:, 0]
 
         x = self.to_latent(x)
@@ -136,7 +145,7 @@ class ViT(nn.Module):
 
 if __name__ == "__main__":
     x = torch.randn((4,3,512,512))
-    model = ViT(image_size = 512, patch_size=32, num_classes=2, dim=256, depth=24, heads=2, mlp_dim=2, pool = 'cls', channels = 3, dim_head = 64, dropout = 0.2, emb_dropout = 0.2)
+    model = ViT(image_size = 512, patch_size=32, num_classes=2, dim=256, depth=2, heads=2, mlp_dim=2, pool = 'cls', channels = 3, dim_head = 64, dropout = 0.2, emb_dropout = 0.2)
     output = model(x)
     print(output)
     print(output.size())
